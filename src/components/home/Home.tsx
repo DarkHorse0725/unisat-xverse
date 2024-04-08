@@ -1,10 +1,15 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import WalletConnectModal from "../common/WalletConnectModal";
 import Inscription from "./Inscriptions";
 import { WalletConnectContext } from "~/provider/WalletProvider";
 
 const HomeComponent = () => {
-  const { inscriptions } = useContext(WalletConnectContext);
+  
+  const { inscriptions, data,fetchXverseData, addressInfo } = useContext(WalletConnectContext);
+  useEffect(() => {
+    fetchXverseData();
+  }, [addressInfo]);
+  console.log("home inscriptions => ", inscriptions);
   return (
     <div className="flex w-full p-5">
       <WalletConnectModal />
@@ -14,8 +19,8 @@ const HomeComponent = () => {
           <div className="flex-1">Value</div>
           <div className="flex-1">TimeStamp</div>
         </div>
-        {inscriptions &&
-          inscriptions.map((row: any) => {
+        {data &&
+          data.map((row: any) => {
             return <Inscription key={row.inscriptionId} data={row} />;
           })}
       </div>

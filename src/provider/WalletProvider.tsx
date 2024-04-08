@@ -5,6 +5,8 @@ import {
   getAddress,
   type Address,
 } from "sats-connect";
+import axios from "axios";
+import Inscription from "~/components/home/Inscriptions";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -63,12 +65,27 @@ const WalletProvider = ({ children }: LayoutProps) => {
   };
 
   const fetchXverseData = async () => {
-    if (isConnected && addressInfo && addressInfo?.length > 0) {
+    console.log(1);
+    console.log("isConnected => ", isConnected);
+    if (addressInfo && addressInfo?.length > 0) {
+      console.log(2);
       const userAddress = addressInfo[0]?.address;
-      const URL = `https://api-3.xverse.app/v1/address/${userAddress}/ordinal-utxo?offset=${offset}`;
-      const res = await (await fetch(URL)).json();
-      const inscriptions = res?.results.map((r: any) => r.inscriptions).flat();
-      const _total = res?.total;
+      // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
+
+      let config = {
+        method: "get",
+        maxBodyLength: Infinity,
+        url: "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
+        headers: {
+          Accept: "application/json",
+        },
+      };
+
+      const res = await axios.request(config);
+      const inscriptions = res.data.results;
+      console.log("inscriptions =>", inscriptions);
+      const _total = res.data.total;
+      console.log("_total => ", _total);
       setData(inscriptions);
       setTotal(_total);
     }
@@ -87,8 +104,9 @@ const WalletProvider = ({ children }: LayoutProps) => {
           type: network,
         },
       },
-      onFinish: (response) => {
+      onFinish: async (response) => {
         setIsConnected(true);
+
         setAddressInfo(response.addresses);
       },
       onCancel: () => {
@@ -96,7 +114,6 @@ const WalletProvider = ({ children }: LayoutProps) => {
       },
     });
     setOpenModal(false);
-    fetchXverseData();
   };
 
   const connectWallet = async (wType: string) => {
@@ -124,10 +141,11 @@ const WalletProvider = ({ children }: LayoutProps) => {
     total: total,
     start: start,
     end: end,
-    offset:offset,
+    offset: offset,
     network: setNetwork,
     setOpenModal: setOpenModal,
     connectWallet: connectWallet,
+    fetchXverseData: fetchXverseData,
   };
 
   return (

@@ -1,8 +1,8 @@
-import { useContext, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo } from "react";
 import { WalletConnectContext } from "~/provider/WalletProvider";
 
 const Header = () => {
-  const { setOpenModal, isConnected, account, addressInfo } =
+  const { setOpenModal, isConnected, account, addressInfo, fetchXverseData } =
     useContext(WalletConnectContext);
 
   console.log("address = ", account);
@@ -15,6 +15,10 @@ const Header = () => {
     }
     return "";
   }, [account, addressInfo]);
+
+  // useEffect(() => {
+  //   fetchXverseData();
+  // }, [addressInfo]);
 
   console.log("_address = ", _address);
 
@@ -34,7 +38,7 @@ const Header = () => {
       )}
       {isConnected && (
         <button className="select-none rounded-lg bg-green-500 px-6 py-3 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-green-500/20 transition-all hover:shadow-lg hover:shadow-green-500/40 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none">
-          {_address.slice(0, 5) + "..." + _address.slice(-5 )}
+          {_address.slice(0, 5) + "..." + _address.slice(-5)}
         </button>
       )}
     </div>
