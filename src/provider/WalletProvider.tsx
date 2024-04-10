@@ -63,32 +63,105 @@ const WalletProvider = ({ children }: LayoutProps) => {
       setData(_data);
     }
   };
+  const getContentData = async (id: string) => {
+    const URL = `https://api.hiro.so/ordinals/v1/inscriptions/${id}/content`;
 
+    let config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: URL,
+      headers: {
+        Accept: "application/json",
+      },
+    };
+    const result = await axios.request(config);
+    return result;
+  };
   const fetchXverseData = async () => {
-    console.log(1);
-    console.log("isConnected => ", isConnected);
     if (addressInfo && addressInfo?.length > 0) {
-      console.log(2);
-      const userAddress = addressInfo[0]?.address;
-      // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
+      const userAddress = addressInfo[0]?.address || "";
 
-      let config = {
-        method: "get",
-        maxBodyLength: Infinity,
-        url: "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
-        headers: {
-          Accept: "application/json",
-        },
-      };
+      const totalNumber = await getTotalNumberOfInscriptionData(userAddress);
+      console.log("totalNumber => ", totalNumber);
+      const _inscription: any[] = [];
+      let cnt = 0;
+      const offset = 20;
+      let error = false;
+      while (
+        _inscription.length < 20 &&
+        totalNumber > cnt * offset 
+      ) {
+        setTimeout(async () => {
+          console.log('cnt = ', cnt, " offset = ", offset, ' cnt * offset = ', cnt * offset)
+          const res = await getInscriptionData(
+            cnt * offset,
+            (cnt + 1) * offset,
+            userAddress,
+          );
 
-      const res = await axios.request(config);
-      const inscriptions = res.data.results;
-      console.log("inscriptions =>", inscriptions);
-      const _total = res.data.total;
-      console.log("_total => ", _total);
-      setData(inscriptions);
-      setTotal(_total);
+          res.results.forEach(async (element: any) => {
+            const temp = await getContentData(element.id);
+            try {
+              const testData = JSON.parse(temp.data);
+              if (testData.p) {
+                _inscription.push(testData);
+              }
+            } catch (err) {
+              console.log("JSON error => ", err);
+            }
+          });
+
+          console.log("_inscription =>", _inscription);
+          cnt = cnt + 1;
+        }, 5000);
+      }
+      setData(_inscription);
+      setTotal(totalNumber);
     }
+  };
+
+  const getTotalNumberOfInscriptionData = async (address: string) => {
+    const userAddress = address;
+    // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + address,
+
+    let URL = "https://api.hiro.so/ordinals/v1/inscriptions";
+
+    let config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: URL,
+      headers: {
+        Accept: "application/json",
+      },
+    };
+
+    const result = await axios.request(config);
+    return result.data.total;
+  };
+
+  const getInscriptionData = async (from = 0, to = 20, address: string) => {
+    const userAddress = address;
+    // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
+
+    let URL = "https://api.hiro.so/ordinals/v1/inscriptions?";
+    if (from >= 0) {
+      URL += "from_number=" + from;
+    }
+    if (from < to && to > 0) {
+      URL += "&to_number=" + to;
+    }
+
+    let config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: URL,
+      headers: {
+        Accept: "application/json",
+      },
+    };
+
+    const result = await axios.request(config);
+    return result.data;
   };
 
   const connectXverseWallet = async () => {
