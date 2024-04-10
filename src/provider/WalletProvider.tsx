@@ -77,46 +77,89 @@ const WalletProvider = ({ children }: LayoutProps) => {
     const result = await axios.request(config);
     return result;
   };
+
+  const sleepFunc = (delayInms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, delayInms * 1000));
+  };
   const fetchXverseData = async () => {
     if (addressInfo && addressInfo?.length > 0) {
       const userAddress = addressInfo[0]?.address || "";
 
       const totalNumber = await getTotalNumberOfInscriptionData(userAddress);
-      console.log("totalNumber => ", totalNumber);
       const _inscription: any[] = [];
-      let cnt = 0;
-      const offset = 20;
+      let cnt = 100000;
+      const _offset = 20;
       let error = false;
-      while (
-        _inscription.length < 20 &&
-        totalNumber > cnt * offset 
-      ) {
-        setTimeout(async () => {
-          console.log('cnt = ', cnt, " offset = ", offset, ' cnt * offset = ', cnt * offset)
-          const res = await getInscriptionData(
-            cnt * offset,
-            (cnt + 1) * offset,
-            userAddress,
-          );
+      while (_inscription.length < 20 && totalNumber > cnt * offset) {
+        await sleepFunc(10);
+        
+        const res = await getInscriptionData(
+          cnt * _offset,
+          (cnt + 1) * _offset,
+          userAddress,
+        );
 
-          res.results.forEach(async (element: any) => {
-            const temp = await getContentData(element.id);
-            try {
-              const testData = JSON.parse(temp.data);
-              if (testData.p) {
-                _inscription.push(testData);
-              }
-            } catch (err) {
-              console.log("JSON error => ", err);
+        res.results.forEach(async (element: any) => {
+          const temp = await getContentData(element.id);
+          try {
+            if (temp.data.p) {
+              const pushData = {
+                ...temp.data,
+                ...{ id: element.id, fav: false, name: "" },
+              };
+              _inscription.push(pushData);
             }
-          });
+          } catch (err) {}
+        });
 
-          console.log("_inscription =>", _inscription);
-          cnt = cnt + 1;
-        }, 5000);
+        cnt = cnt + 1;
       }
+      const _already = localStorage.getItem(userAddress);
+      const _addIns: any[] = [];
+      if (!_already) {
+        localStorage.setItem(userAddress, JSON.stringify(_inscription));
+      } else {
+        const stdata = JSON.parse(_already);
+        for (let i = 0; i < _inscription.length; i++) {
+          let count = 0;
+          if (stdata.length > 0) {
+            for (let j = 0; j < stdata.length; j++) {
+              if (stdata[j].id === _inscription[i].id) {
+                count++;
+              }
+            }
+            if (count === 0) {
+              _addIns.push(_inscription);
+            }
+          }
+        }
+
+        stdata.concat(_addIns);
+        localStorage.setItem(userAddress, JSON.stringify(stdata));
+      }
+
       setData(_inscription);
       setTotal(totalNumber);
+    }
+  };
+
+  const setLocalStorageData = (saddress: string, inputData: any) => {
+    const data = localStorage.getItem(saddress);
+    if (data) {
+      const currentData = JSON.parse(data);
+      const updatedData: any[] = [];
+      currentData.forEach((element: any) => {
+        if (element.id === inputData.address) {
+          let temp = element;
+          temp.fav = inputData.fav;
+          temp.name = inputData.name;
+          updatedData.push(temp);
+        } else {
+          updatedData.push(element);
+        }
+      });
+
+      localStorage.setItem(saddress, JSON.stringify(updatedData));
     }
   };
 
@@ -124,7 +167,7 @@ const WalletProvider = ({ children }: LayoutProps) => {
     const userAddress = address;
     // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + address,
 
-    let URL = "https://api.hiro.so/ordinals/v1/inscriptions";
+    let URL = "https://api.hiro.so/ordinals/v1/inscriptions?address=" + address;
 
     let config = {
       method: "get",
@@ -143,7 +186,7 @@ const WalletProvider = ({ children }: LayoutProps) => {
     const userAddress = address;
     // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
 
-    let URL = "https://api.hiro.so/ordinals/v1/inscriptions?";
+    let URL = `https://api.hiro.so/ordinals/v1/inscriptions?address=${userAddress}&order=desc&`;
     if (from >= 0) {
       URL += "from_number=" + from;
     }
@@ -219,6 +262,7 @@ const WalletProvider = ({ children }: LayoutProps) => {
     setOpenModal: setOpenModal,
     connectWallet: connectWallet,
     fetchXverseData: fetchXverseData,
+    setLocalStorageData: setLocalStorageData,
   };
 
   return (

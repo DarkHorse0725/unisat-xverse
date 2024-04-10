@@ -9,7 +9,6 @@ const HomeComponent = () => {
   useEffect(() => {
     fetchXverseData();
   }, [addressInfo]);
-  console.log("home inscriptions => ", inscriptions);
   return (
     <div className="flex w-full p-5">
       <WalletConnectModal />

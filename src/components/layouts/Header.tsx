@@ -5,8 +5,6 @@ const Header = () => {
   const { setOpenModal, isConnected, account, addressInfo, fetchXverseData } =
     useContext(WalletConnectContext);
 
-  console.log("address = ", account);
-  console.log("addressInfo = ", addressInfo);
 
   const _address = useMemo(() => {
     if (account && account.length > 0) return account.toString();
@@ -20,7 +18,6 @@ const Header = () => {
   //   fetchXverseData();
   // }, [addressInfo]);
 
-  console.log("_address = ", _address);
 
   const handleOpenModal = () => {
     setOpenModal(true);
