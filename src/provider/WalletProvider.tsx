@@ -87,19 +87,20 @@ const WalletProvider = ({ children }: LayoutProps) => {
 
       const totalNumber = await getTotalNumberOfInscriptionData(userAddress);
       const _inscription: any[] = [];
-      let cnt = 100000;
+      // let cnt = 100000;
+      let cnt = 0;
       const _offset = 20;
       let error = false;
-      while (_inscription.length < 20 && totalNumber > cnt * offset) {
+      while (_inscription.length < 20 && totalNumber > cnt * _offset) {
         await sleepFunc(10);
-        
-        const res = await getInscriptionData(
-          cnt * _offset,
-          (cnt + 1) * _offset,
-          userAddress,
-        );
+        let st = cnt * _offset;
+        let en = (cnt + 1) * _offset;
+        if (totalNumber < 20) {
+          st = en = -1;
+        }
+        const res = await getInscriptionData(st, en, userAddress);
 
-        res.results.forEach(async (element: any) => {
+        for (const element of res.results) {
           const temp = await getContentData(element.id);
           try {
             if (temp.data.p) {
@@ -110,7 +111,7 @@ const WalletProvider = ({ children }: LayoutProps) => {
               _inscription.push(pushData);
             }
           } catch (err) {}
-        });
+        }
 
         cnt = cnt + 1;
       }
@@ -186,9 +187,9 @@ const WalletProvider = ({ children }: LayoutProps) => {
     const userAddress = address;
     // "https://api.hiro.so/ordinals/v1/inscriptions?address=" + userAddress,
 
-    let URL = `https://api.hiro.so/ordinals/v1/inscriptions?address=${userAddress}&order=desc&`;
+    let URL = `https://api.hiro.so/ordinals/v1/inscriptions?order=desc&address=${userAddress}`;
     if (from >= 0) {
-      URL += "from_number=" + from;
+      URL += "&from_number=" + from;
     }
     if (from < to && to > 0) {
       URL += "&to_number=" + to;

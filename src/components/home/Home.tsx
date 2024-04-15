@@ -16,7 +16,7 @@ const HomeComponent = () => {
         <div className="flex w-full border-black border-red-100 bg-slate-300 p-3 text-center">
           <div className="flex-1">ID</div>
           <div className="flex-1">Value</div>
-          <div className="flex-1">TimeStamp</div>
+          <div className="flex-1">Name</div>
         </div>
         {data &&
           data.map((row: any) => {
